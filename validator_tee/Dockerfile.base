@@ -1,0 +1,59 @@
+# ============================================================
+# BASE IMAGE FOR VALIDATOR ENCLAVE
+# ============================================================
+# This Dockerfile creates a base image with Python and pip installed.
+# Build this ONCE and cache it - the enclave Dockerfile uses this as base.
+#
+# WHY SEPARATE?
+# - yum install is non-deterministic (different file order each time)
+# - By building base once and caching, we get reproducible builds
+# - The enclave Dockerfile only does COPY operations = deterministic
+#
+# REPRODUCIBILITY FIX (Jan 2026):
+# Python .pyc files contain embedded timestamps INSIDE the file content.
+# These timestamps cause different PCR0 values even with identical source code.
+# Solution: Prevent .pyc generation and delete all existing .pyc files.
+#
+# HOW TO REBUILD (for security patches):
+# 1. Get new amazonlinux:2 digest:
+#    docker pull amazonlinux:2
+#    docker inspect --format='{{index .RepoDigests 0}}' amazonlinux:2
+# 2. Update the digest below
+# 3. Rebuild: docker build -f Dockerfile.base -t validator-base:v1 .
+# 4. Update Dockerfile.enclave to use new base
+# ============================================================
+
+FROM amazonlinux:2@sha256:0b09112ad58d45fd7e46a399048133f4572a834b8ccfeebbfb6215b0092acfc6
+
+# =============================================================================
+# REPRODUCIBILITY ENVIRONMENT VARIABLES
+# =============================================================================
+# PYTHONDONTWRITEBYTECODE: Prevents Python from writing .pyc files
+# PYTHONHASHSEED: Makes hash() deterministic (0 = disabled randomization)
+# SOURCE_DATE_EPOCH: Standard for reproducible builds (epoch 0 = 1970-01-01)
+# =============================================================================
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONHASHSEED=0
+ENV SOURCE_DATE_EPOCH=0
+
+# Install Python 3 and pip
+# yum packages in amazonlinux:2 are stable (won't change without base image change)
+#
+# IMPORTANT: We delete non-deterministic files created by yum/rpm AND all .pyc
+# files to ensure reproducible builds across different machines.
+RUN yum install -y \
+    python3 \
+    python3-pip \
+    && yum clean all \
+    && rm -rf /var/cache/ldconfig/aux-cache \
+    && rm -rf /var/cache/yum \
+    && rm -rf /var/lib/rpm/__db.* \
+    && rm -f /var/lib/rpm/Installtid \
+    && rm -f /var/lib/rpm/Packages \
+    && rm -rf /var/lib/yum/history \
+    && rm -rf /var/lib/yum/yumdb \
+    && rm -f /var/log/yum.log \
+    && find /usr -type f -name "*.pyc" -delete \
+    && find /usr -type f -name "*.pyo" -delete \
+    && find /usr -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
