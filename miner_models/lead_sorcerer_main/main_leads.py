@@ -85,54 +85,800 @@ SEARCH_CACHE  = DATA_DIR / ".search_cache.json"
 CSV_FIELDS    = ["business","website","industry","sub_industry","country","state","city"]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Industry Taxonomy  (canonical values from Subnet 71)
+# Industry Taxonomy — 725 sub-industries, 50 parent industries (from industry_taxonomy.py)
+# sub_industry = specific category (e.g. "SaaS", "FinTech", "AgTech")
+# industry     = parent bucket  (e.g. "Software", "Financial Services")
 # ─────────────────────────────────────────────────────────────────────────────
-# Top-level industries
-INDUSTRY_TAXONOMY: Dict[str, List[str]] = {
-    "Tech & AI":       ["SaaS","AI/ML","Cloud Computing","Cybersecurity","Developer Tools",
-                        "Data & Analytics","Infrastructure","IoT","Blockchain","AR/VR",
-                        "Robotics","Autonomous Vehicles","API","Open Source","Developer Tools"],
-    "FinTech":         ["Payments","Banking","InsurTech","WealthTech","Lending","Crypto",
-                        "RegTech","Accounting","POS & Billing"],
-    "Healthcare":      ["Digital Health","MedTech","Biotech","Pharma","Mental Health",
-                        "Fitness & Wellness","HealthTech","Telemedicine","Medical Devices"],
-    "E-commerce":      ["Marketplace","D2C","Retail Tech","Supply Chain","Logistics",
-                        "Fulfillment","Dropshipping","Fashion","Beauty"],
-    "EdTech":          ["Online Learning","LMS","Corporate Training","K-12","Higher Ed",
-                        "Skills & Certification","Language Learning"],
-    "HR Tech":         ["Recruiting","Payroll","HRIS","Employee Engagement","Benefits",
-                        "Workforce Management","Background Checks"],
-    "MarTech":         ["CRM","Email Marketing","SEO","Content Marketing","Social Media",
-                        "Advertising Tech","Analytics","Affiliate Marketing"],
-    "LegalTech":       ["Contract Management","Legal Research","Compliance","IP Management",
-                        "Court Tech","Legal Billing"],
-    "PropTech":        ["Real Estate SaaS","Property Management","iBuying","Mortgage Tech",
-                        "Smart Buildings","Construction Tech"],
-    "CleanTech":       ["Solar","Wind","Energy Storage","EV","Carbon Credits","Water Tech",
-                        "Waste Management","Smart Grid"],
-    "AgTech":          ["Precision Farming","Crop Tech","Livestock Tech","Supply Chain",
-                        "Farm Management Software","Indoor Farming"],
-    "Media & Content": ["Streaming","Publishing","Podcast","Gaming","Creator Economy",
-                        "News Tech","Sports Tech","Music Tech"],
-    "Travel & Hospitality":["Booking","Hotel Tech","Flight Tech","Restaurant Tech",
-                            "Experience","Mobility"],
-    "Manufacturing":   ["Industry 4.0","3D Printing","Quality Control","Supply Chain",
-                        "Automation","Chemical","Materials"],
-    "Professional Services":["Consulting","Accounting","Recruitment","Legal","Marketing Agency",
-                              "IT Services","Business Intelligence"],
+VALID_INDUSTRIES: set = {
+    'Administrative Services',
+    'Advertising',
+    'Agriculture and Farming',
+    'Apps',
+    'Artificial Intelligence',
+    'Biotechnology',
+    'Blockchain and Cryptocurrency',
+    'Clothing and Apparel',
+    'Collaboration',
+    'Commerce and Shopping',
+    'Community and Lifestyle',
+    'Consumer Electronics',
+    'Consumer Goods',
+    'Content and Publishing',
+    'Data and Analytics',
+    'Design',
+    'Education',
+    'Energy',
+    'Events',
+    'Financial Services',
+    'Food and Beverage',
+    'Gaming',
+    'Government and Military',
+    'Hardware',
+    'Health Care',
+    'Information Technology',
+    'Internet Services',
+    'Lending and Investments',
+    'Manufacturing',
+    'Media and Entertainment',
+    'Messaging and Telecommunications',
+    'Mobile',
+    'Music and Audio',
+    'Natural Resources',
+    'Navigation and Mapping',
+    'Payments',
+    'Physical Infrastructure',
+    'Platforms',
+    'Privacy and Security',
+    'Professional Services',
+    'Real Estate',
+    'Sales and Marketing',
+    'Science and Engineering',
+    'Social Impact',
+    'Software',
+    'Sports',
+    'Sustainability',
+    'Transportation',
+    'Travel and Tourism',
+    'Video',
 }
 
-# Flat lookup: keyword → (industry, sub_industry)
-_IND_KEYWORDS: List[Tuple[str, str, str]] = []
-for _ind, _subs in INDUSTRY_TAXONOMY.items():
-    _IND_KEYWORDS.append((_ind.lower(), _ind, _subs[0]))
-    for _sub in _subs:
-        _IND_KEYWORDS.append((_sub.lower(), _ind, _sub))
+# Flat keyword→(parent_industry, sub_industry) lookup — 725 entries, sorted A-Z
+_IND_KEYWORDS: List[Tuple[str,str,str]] = [
+    ('3d printing', 'Manufacturing', '3D Printing'),
+    ('3d technology', 'Hardware', '3D Technology'),
+    ('a/b testing', 'Data and Analytics', 'A/B Testing'),
+    ('accounting', 'Financial Services', 'Accounting'),
+    ('ad exchange', 'Advertising', 'Ad Exchange'),
+    ('ad network', 'Advertising', 'Ad Network'),
+    ('ad retargeting', 'Advertising', 'Ad Retargeting'),
+    ('ad server', 'Advertising', 'Ad Server'),
+    ('ad targeting', 'Advertising', 'Ad Targeting'),
+    ('advanced materials', 'Manufacturing', 'Advanced Materials'),
+    ('adventure travel', 'Travel and Tourism', 'Adventure Travel'),
+    ('advertising', 'Advertising', 'Advertising'),
+    ('advertising platforms', 'Advertising', 'Advertising Platforms'),
+    ('advice', 'Media and Entertainment', 'Advice'),
+    ('aerospace', 'Science and Engineering', 'Aerospace'),
+    ('affiliate marketing', 'Advertising', 'Affiliate Marketing'),
+    ('agtech', 'Agriculture and Farming', 'AgTech'),
+    ('agriculture', 'Agriculture and Farming', 'Agriculture'),
+    ('air transportation', 'Transportation', 'Air Transportation'),
+    ('alternative medicine', 'Health Care', 'Alternative Medicine'),
+    ('alumni', 'Education', 'Alumni'),
+    ('american football', 'Sports', 'American Football'),
+    ('amusement park and arcade', 'Travel and Tourism', 'Amusement Park and Arcade'),
+    ('analytics', 'Data and Analytics', 'Analytics'),
+    ('android', 'Mobile', 'Android'),
+    ('angel investment', 'Financial Services', 'Angel Investment'),
+    ('animal feed', 'Agriculture and Farming', 'Animal Feed'),
+    ('animation', 'Media and Entertainment', 'Animation'),
+    ('app discovery', 'Apps', 'App Discovery'),
+    ('app marketing', 'Sales and Marketing', 'App Marketing'),
+    ('application performance management', 'Data and Analytics', 'Application Performance Management'),
+    ('application specific integrated circuit (asic)', 'Hardware', 'Application Specific Integrated Circuit (ASIC)'),
+    ('apps', 'Apps', 'Apps'),
+    ('aquaculture', 'Agriculture and Farming', 'Aquaculture'),
+    ('architecture', 'Real Estate', 'Architecture'),
+    ('archiving service', 'Administrative Services', 'Archiving Service'),
+    ('art', 'Media and Entertainment', 'Art'),
+    ('artificial intelligence', 'Artificial Intelligence', 'Artificial Intelligence'),
+    ('asset management', 'Financial Services', 'Asset Management'),
+    ('assisted living', 'Health Care', 'Assisted Living'),
+    ('assistive technology', 'Health Care', 'Assistive Technology'),
+    ('auctions', 'Commerce and Shopping', 'Auctions'),
+    ('audio', 'Media and Entertainment', 'Audio'),
+    ('audiobooks', 'Media and Entertainment', 'Audiobooks'),
+    ('augmented reality', 'Hardware', 'Augmented Reality'),
+    ('auto insurance', 'Financial Services', 'Auto Insurance'),
+    ('automotive', 'Transportation', 'Automotive'),
+    ('autonomous vehicles', 'Transportation', 'Autonomous Vehicles'),
+    ('b2b', 'Sales and Marketing', 'B2B'),
+    ('b2c', 'Sales and Marketing', 'B2C'),
+    ('baby', 'Community and Lifestyle', 'Baby'),
+    ('bakery', 'Food and Beverage', 'Bakery'),
+    ('banking', 'Financial Services', 'Banking'),
+    ('baseball', 'Sports', 'Baseball'),
+    ('basketball', 'Sports', 'Basketball'),
+    ('battery', 'Energy', 'Battery'),
+    ('beauty', 'Consumer Goods', 'Beauty'),
+    ('big data', 'Data and Analytics', 'Big Data'),
+    ('billing', 'Payments', 'Billing'),
+    ('biofuel', 'Energy', 'Biofuel'),
+    ('bioinformatics', 'Biotechnology', 'Bioinformatics'),
+    ('biomass energy', 'Energy', 'Biomass Energy'),
+    ('biometrics', 'Biotechnology', 'Biometrics'),
+    ('biopharma', 'Biotechnology', 'Biopharma'),
+    ('biotechnology', 'Biotechnology', 'Biotechnology'),
+    ('bitcoin', 'Financial Services', 'Bitcoin'),
+    ('blockchain', 'Blockchain and Cryptocurrency', 'Blockchain'),
+    ('blogging platforms', 'Content and Publishing', 'Blogging Platforms'),
+    ('boating', 'Sports', 'Boating'),
+    ('brand marketing', 'Sales and Marketing', 'Brand Marketing'),
+    ('brewing', 'Food and Beverage', 'Brewing'),
+    ('broadcasting', 'Media and Entertainment', 'Broadcasting'),
+    ('browser extensions', 'Software', 'Browser Extensions'),
+    ('building maintenance', 'Real Estate', 'Building Maintenance'),
+    ('building material', 'Real Estate', 'Building Material'),
+    ('business development', 'Professional Services', 'Business Development'),
+    ('business information systems', 'Information Technology', 'Business Information Systems'),
+    ('business intelligence', 'Data and Analytics', 'Business Intelligence'),
+    ('business travel', 'Travel and Tourism', 'Business Travel'),
+    ('cad', 'Design', 'CAD'),
+    ('cms', 'Information Technology', 'CMS'),
+    ('crm', 'Information Technology', 'CRM'),
+    ('call center', 'Administrative Services', 'Call Center'),
+    ('cannabis', 'Community and Lifestyle', 'Cannabis'),
+    ('car sharing', 'Transportation', 'Car Sharing'),
+    ('career planning', 'Professional Services', 'Career Planning'),
+    ('casino', 'Travel and Tourism', 'Casino'),
+    ('casual games', 'Gaming', 'Casual Games'),
+    ('catering', 'Food and Beverage', 'Catering'),
+    ('cause marketing', 'Sales and Marketing', 'Cause Marketing'),
+    ('celebrity', 'Media and Entertainment', 'Celebrity'),
+    ('charity', 'Social Impact', 'Charity'),
+    ('charter schools', 'Education', 'Charter Schools'),
+    ('chemical', 'Science and Engineering', 'Chemical'),
+    ('chemical engineering', 'Science and Engineering', 'Chemical Engineering'),
+    ('child care', 'Health Care', 'Child Care'),
+    ('children', 'Community and Lifestyle', 'Children'),
+    ('civictech', 'Government and Military', 'CivicTech'),
+    ('civil engineering', 'Science and Engineering', 'Civil Engineering'),
+    ('classifieds', 'Commerce and Shopping', 'Classifieds'),
+    ('clean energy', 'Energy', 'Clean Energy'),
+    ('cleantech', 'Sustainability', 'CleanTech'),
+    ('clinical trials', 'Health Care', 'Clinical Trials'),
+    ('cloud computing', 'Internet Services', 'Cloud Computing'),
+    ('cloud data services', 'Information Technology', 'Cloud Data Services'),
+    ('cloud infrastructure', 'Hardware', 'Cloud Infrastructure'),
+    ('cloud management', 'Information Technology', 'Cloud Management'),
+    ('cloud security', 'Information Technology', 'Cloud Security'),
+    ('cloud storage', 'Internet Services', 'Cloud Storage'),
+    ('coffee', 'Food and Beverage', 'Coffee'),
+    ('collaboration', 'Collaboration', 'Collaboration'),
+    ('collaborative consumption', 'Collaboration', 'Collaborative Consumption'),
+    ('collectibles', 'Commerce and Shopping', 'Collectibles'),
+    ('collection agency', 'Administrative Services', 'Collection Agency'),
+    ('college recruiting', 'Administrative Services', 'College Recruiting'),
+    ('comics', 'Consumer Goods', 'Comics'),
+    ('commercial insurance', 'Financial Services', 'Commercial Insurance'),
+    ('commercial lending', 'Financial Services', 'Commercial Lending'),
+    ('commercial real estate', 'Real Estate', 'Commercial Real Estate'),
+    ('communication hardware', 'Hardware', 'Communication Hardware'),
+    ('communications infrastructure', 'Hardware', 'Communications Infrastructure'),
+    ('communities', 'Community and Lifestyle', 'Communities'),
+    ('compliance', 'Professional Services', 'Compliance'),
+    ('computer', 'Consumer Electronics', 'Computer'),
+    ('computer vision', 'Hardware', 'Computer Vision'),
+    ('concerts', 'Events', 'Concerts'),
+    ('confectionery', 'Food and Beverage', 'Confectionery'),
+    ('console games', 'Gaming', 'Console Games'),
+    ('construction', 'Real Estate', 'Construction'),
+    ('consulting', 'Professional Services', 'Consulting'),
+    ('consumer applications', 'Apps', 'Consumer Applications'),
+    ('consumer electronics', 'Consumer Electronics', 'Consumer Electronics'),
+    ('consumer goods', 'Consumer Goods', 'Consumer Goods'),
+    ('consumer lending', 'Financial Services', 'Consumer Lending'),
+    ('consumer research', 'Data and Analytics', 'Consumer Research'),
+    ('consumer reviews', 'Commerce and Shopping', 'Consumer Reviews'),
+    ('consumer software', 'Software', 'Consumer Software'),
+    ('contact management', 'Information Technology', 'Contact Management'),
+    ('content', 'Media and Entertainment', 'Content'),
+    ('content creators', 'Media and Entertainment', 'Content Creators'),
+    ('content delivery network', 'Content and Publishing', 'Content Delivery Network'),
+    ('content discovery', 'Content and Publishing', 'Content Discovery'),
+    ('content marketing', 'Sales and Marketing', 'Content Marketing'),
+    ('content syndication', 'Content and Publishing', 'Content Syndication'),
+    ('contests', 'Gaming', 'Contests'),
+    ('continuing education', 'Education', 'Continuing Education'),
+    ('cooking', 'Food and Beverage', 'Cooking'),
+    ('corporate training', 'Education', 'Corporate Training'),
+    ('corrections facilities', 'Privacy and Security', 'Corrections Facilities'),
+    ('cosmetic surgery', 'Health Care', 'Cosmetic Surgery'),
+    ('cosmetics', 'Consumer Goods', 'Cosmetics'),
+    ('coupons', 'Commerce and Shopping', 'Coupons'),
+    ('courier service', 'Administrative Services', 'Courier Service'),
+    ('coworking', 'Real Estate', 'Coworking'),
+    ('craft beer', 'Food and Beverage', 'Craft Beer'),
+    ('creative agency', 'Content and Publishing', 'Creative Agency'),
+    ('credit', 'Financial Services', 'Credit'),
+    ('credit bureau', 'Financial Services', 'Credit Bureau'),
+    ('credit cards', 'Financial Services', 'Credit Cards'),
+    ('cricket', 'Sports', 'Cricket'),
+    ('crowdfunding', 'Financial Services', 'Crowdfunding'),
+    ('crowdsourcing', 'Collaboration', 'Crowdsourcing'),
+    ('cryptocurrency', 'Financial Services', 'Cryptocurrency'),
+    ('customer service', 'Professional Services', 'Customer Service'),
+    ('cyber security', 'Information Technology', 'Cyber Security'),
+    ('cycling', 'Sports', 'Cycling'),
+    ('diy', 'Consumer Goods', 'DIY'),
+    ('drm', 'Content and Publishing', 'DRM'),
+    ('dsp', 'Hardware', 'DSP'),
+    ('darknet', 'Internet Services', 'Darknet'),
+    ('data center', 'Hardware', 'Data Center'),
+    ('data center automation', 'Hardware', 'Data Center Automation'),
+    ('data integration', 'Data and Analytics', 'Data Integration'),
+    ('data mining', 'Data and Analytics', 'Data Mining'),
+    ('data storage', 'Hardware', 'Data Storage'),
+    ('data visualization', 'Data and Analytics', 'Data Visualization'),
+    ('database', 'Data and Analytics', 'Database'),
+    ('dating', 'Community and Lifestyle', 'Dating'),
+    ('debit cards', 'Financial Services', 'Debit Cards'),
+    ('debt collections', 'Administrative Services', 'Debt Collections'),
+    ('delivery', 'Administrative Services', 'Delivery'),
+    ('delivery service', 'Transportation', 'Delivery Service'),
+    ('dental', 'Health Care', 'Dental'),
+    ('desktop apps', 'Software', 'Desktop Apps'),
+    ('developer apis', 'Software', 'Developer APIs'),
+    ('developer platform', 'Software', 'Developer Platform'),
+    ('developer tools', 'Software', 'Developer Tools'),
+    ('diabetes', 'Health Care', 'Diabetes'),
+    ('dietary supplements', 'Food and Beverage', 'Dietary Supplements'),
+    ('digital entertainment', 'Media and Entertainment', 'Digital Entertainment'),
+    ('digital marketing', 'Sales and Marketing', 'Digital Marketing'),
+    ('digital media', 'Media and Entertainment', 'Digital Media'),
+    ('digital signage', 'Sales and Marketing', 'Digital Signage'),
+    ('direct marketing', 'Sales and Marketing', 'Direct Marketing'),
+    ('distillery', 'Food and Beverage', 'Distillery'),
+    ('diving', 'Sports', 'Diving'),
+    ('document management', 'Information Technology', 'Document Management'),
+    ('document preparation', 'Administrative Services', 'Document Preparation'),
+    ('domain registrar', 'Internet Services', 'Domain Registrar'),
+    ('drone management', 'Hardware', 'Drone Management'),
+    ('drones', 'Consumer Electronics', 'Drones'),
+    ('e-commerce', 'Commerce and Shopping', 'E-Commerce'),
+    ('e-commerce platforms', 'Commerce and Shopping', 'E-Commerce Platforms'),
+    ('e-learning', 'Education', 'E-Learning'),
+    ('e-signature', 'Information Technology', 'E-Signature'),
+    ('ebooks', 'Content and Publishing', 'EBooks'),
+    ('edtech', 'Education', 'EdTech'),
+    ('ediscovery', 'Internet Services', 'Ediscovery'),
+    ('education', 'Education', 'Education'),
+    ('edutainment', 'Education', 'Edutainment'),
+    ('elder care', 'Health Care', 'Elder Care'),
+    ('elderly', 'Community and Lifestyle', 'Elderly'),
+    ('electric vehicle', 'Transportation', 'Electric Vehicle'),
+    ('electrical distribution', 'Energy', 'Electrical Distribution'),
+    ('electronic design automation (eda)', 'Hardware', 'Electronic Design Automation (EDA)'),
+    ('electronic health record (ehr)', 'Health Care', 'Electronic Health Record (EHR)'),
+    ('electronics', 'Consumer Electronics', 'Electronics'),
+    ('email', 'Information Technology', 'Email'),
+    ('email marketing', 'Sales and Marketing', 'Email Marketing'),
+    ('embedded software', 'Software', 'Embedded Software'),
+    ('embedded systems', 'Hardware', 'Embedded Systems'),
+    ('emergency medicine', 'Health Care', 'Emergency Medicine'),
+    ('emerging markets', 'Commerce and Shopping', 'Emerging Markets'),
+    ('employee benefits', 'Administrative Services', 'Employee Benefits'),
+    ('employment', 'Professional Services', 'Employment'),
+    ('energy', 'Energy', 'Energy'),
+    ('energy efficiency', 'Energy', 'Energy Efficiency'),
+    ('energy management', 'Energy', 'Energy Management'),
+    ('energy storage', 'Energy', 'Energy Storage'),
+    ('enterprise applications', 'Apps', 'Enterprise Applications'),
+    ('enterprise resource planning (erp)', 'Software', 'Enterprise Resource Planning (ERP)'),
+    ('enterprise software', 'Software', 'Enterprise Software'),
+    ('environmental consulting', 'Professional Services', 'Environmental Consulting'),
+    ('environmental engineering', 'Science and Engineering', 'Environmental Engineering'),
+    ('equestrian', 'Agriculture and Farming', 'Equestrian'),
+    ('ethereum', 'Blockchain and Cryptocurrency', 'Ethereum'),
+    ('event management', 'Events', 'Event Management'),
+    ('event promotion', 'Events', 'Event Promotion'),
+    ('events', 'Events', 'Events'),
+    ('extermination service', 'Administrative Services', 'Extermination Service'),
+    ('eyewear', 'Consumer Goods', 'Eyewear'),
+    ('facebook', 'Platforms', 'Facebook'),
+    ('facial recognition', 'Data and Analytics', 'Facial Recognition'),
+    ('facilities support services', 'Administrative Services', 'Facilities Support Services'),
+    ('facility management', 'Real Estate', 'Facility Management'),
+    ('family', 'Community and Lifestyle', 'Family'),
+    ('fantasy sports', 'Gaming', 'Fantasy Sports'),
+    ('farmers market', 'Food and Beverage', 'Farmers Market'),
+    ('farming', 'Agriculture and Farming', 'Farming'),
+    ('fashion', 'Clothing and Apparel', 'Fashion'),
+    ('fast-moving consumer goods', 'Consumer Goods', 'Fast-Moving Consumer Goods'),
+    ('ferry service', 'Transportation', 'Ferry Service'),
+    ('fertility', 'Health Care', 'Fertility'),
+    ('field support', 'Professional Services', 'Field Support'),
+    ('field-programmable gate array (fpga)', 'Hardware', 'Field-Programmable Gate Array (FPGA)'),
+    ('file sharing', 'Software', 'File Sharing'),
+    ('film', 'Media and Entertainment', 'Film'),
+    ('film distribution', 'Media and Entertainment', 'Film Distribution'),
+    ('film production', 'Media and Entertainment', 'Film Production'),
+    ('fintech', 'Financial Services', 'FinTech'),
+    ('finance', 'Financial Services', 'Finance'),
+    ('financial exchanges', 'Financial Services', 'Financial Exchanges'),
+    ('financial services', 'Financial Services', 'Financial Services'),
+    ('first aid', 'Health Care', 'First Aid'),
+    ('fitness', 'Sports', 'Fitness'),
+    ('flash sale', 'Commerce and Shopping', 'Flash Sale'),
+    ('flash storage', 'Hardware', 'Flash Storage'),
+    ('fleet management', 'Transportation', 'Fleet Management'),
+    ('flowers', 'Consumer Goods', 'Flowers'),
+    ('food delivery', 'Food and Beverage', 'Food Delivery'),
+    ('food processing', 'Food and Beverage', 'Food Processing'),
+    ('food trucks', 'Food and Beverage', 'Food Trucks'),
+    ('food and beverage', 'Food and Beverage', 'Food and Beverage'),
+    ('forestry', 'Agriculture and Farming', 'Forestry'),
+    ('fossil fuels', 'Energy', 'Fossil Fuels'),
+    ('foundries', 'Manufacturing', 'Foundries'),
+    ('fraud detection', 'Financial Services', 'Fraud Detection'),
+    ('freelance', 'Professional Services', 'Freelance'),
+    ('freight service', 'Transportation', 'Freight Service'),
+    ('fruit', 'Food and Beverage', 'Fruit'),
+    ('fuel', 'Energy', 'Fuel'),
+    ('fuel cell', 'Energy', 'Fuel Cell'),
+    ('funding platform', 'Financial Services', 'Funding Platform'),
+    ('funerals', 'Community and Lifestyle', 'Funerals'),
+    ('furniture', 'Consumer Goods', 'Furniture'),
+    ('gps', 'Hardware', 'GPS'),
+    ('gpu', 'Hardware', 'GPU'),
+    ('gambling', 'Gaming', 'Gambling'),
+    ('gamification', 'Gaming', 'Gamification'),
+    ('gaming', 'Gaming', 'Gaming'),
+    ('genetics', 'Biotechnology', 'Genetics'),
+    ('geospatial', 'Data and Analytics', 'Geospatial'),
+    ('gift', 'Commerce and Shopping', 'Gift'),
+    ('gift card', 'Commerce and Shopping', 'Gift Card'),
+    ('gift exchange', 'Commerce and Shopping', 'Gift Exchange'),
+    ('gift registry', 'Commerce and Shopping', 'Gift Registry'),
+    ('golf', 'Sports', 'Golf'),
+    ('google', 'Platforms', 'Google'),
+    ('google glass', 'Consumer Electronics', 'Google Glass'),
+    ('govtech', 'Government and Military', 'GovTech'),
+    ('government', 'Government and Military', 'Government'),
+    ('graphic design', 'Design', 'Graphic Design'),
+    ('green building', 'Real Estate', 'Green Building'),
+    ('green consumer goods', 'Consumer Goods', 'Green Consumer Goods'),
+    ('greentech', 'Sustainability', 'GreenTech'),
+    ('grocery', 'Food and Beverage', 'Grocery'),
+    ('group buying', 'Commerce and Shopping', 'Group Buying'),
+    ('guides', 'Media and Entertainment', 'Guides'),
+    ('handmade', 'Consumer Goods', 'Handmade'),
+    ('hardware', 'Hardware', 'Hardware'),
+    ('health care', 'Health Care', 'Health Care'),
+    ('health diagnostics', 'Health Care', 'Health Diagnostics'),
+    ('health insurance', 'Financial Services', 'Health Insurance'),
+    ('hedge funds', 'Financial Services', 'Hedge Funds'),
+    ('higher education', 'Education', 'Higher Education'),
+    ('hockey', 'Sports', 'Hockey'),
+    ('home decor', 'Real Estate', 'Home Decor'),
+    ('home health care', 'Health Care', 'Home Health Care'),
+    ('home improvement', 'Real Estate', 'Home Improvement'),
+    ('home renovation', 'Real Estate', 'Home Renovation'),
+    ('home services', 'Real Estate', 'Home Services'),
+    ('home and garden', 'Real Estate', 'Home and Garden'),
+    ('homeland security', 'Privacy and Security', 'Homeland Security'),
+    ('homeless shelter', 'Social Impact', 'Homeless Shelter'),
+    ('horticulture', 'Agriculture and Farming', 'Horticulture'),
+    ('hospital', 'Health Care', 'Hospital'),
+    ('hospitality', 'Travel and Tourism', 'Hospitality'),
+    ('hotel', 'Travel and Tourism', 'Hotel'),
+    ('housekeeping service', 'Administrative Services', 'Housekeeping Service'),
+    ('human computer interaction', 'Design', 'Human Computer Interaction'),
+    ('human resources', 'Administrative Services', 'Human Resources'),
+    ('humanitarian', 'Community and Lifestyle', 'Humanitarian'),
+    ('hunting', 'Sports', 'Hunting'),
+    ('hydroponics', 'Agriculture and Farming', 'Hydroponics'),
+    ('isp', 'Internet Services', 'ISP'),
+    ('it infrastructure', 'Information Technology', 'IT Infrastructure'),
+    ('it management', 'Information Technology', 'IT Management'),
+    ('iaas', 'Software', 'IaaS'),
+    ('identity management', 'Information Technology', 'Identity Management'),
+    ('image recognition', 'Data and Analytics', 'Image Recognition'),
+    ('impact investing', 'Financial Services', 'Impact Investing'),
+    ('in-flight entertainment', 'Media and Entertainment', 'In-Flight Entertainment'),
+    ('incubators', 'Financial Services', 'Incubators'),
+    ('independent music', 'Media and Entertainment', 'Independent Music'),
+    ('indoor positioning', 'Navigation and Mapping', 'Indoor Positioning'),
+    ('industrial', 'Manufacturing', 'Industrial'),
+    ('industrial design', 'Design', 'Industrial Design'),
+    ('industrial engineering', 'Manufacturing', 'Industrial Engineering'),
+    ('industrial manufacturing', 'Manufacturing', 'Industrial Manufacturing'),
+    ('information services', 'Information Technology', 'Information Services'),
+    ('information technology', 'Information Technology', 'Information Technology'),
+    ('information and communications technology (ict)', 'Information Technology', 'Information and Communications Technology (ICT)'),
+    ('infrastructure', 'Physical Infrastructure', 'Infrastructure'),
+    ('innovation management', 'Professional Services', 'Innovation Management'),
+    ('insurtech', 'Financial Services', 'InsurTech'),
+    ('insurance', 'Financial Services', 'Insurance'),
+    ('intellectual property', 'Professional Services', 'Intellectual Property'),
+    ('intelligent systems', 'Artificial Intelligence', 'Intelligent Systems'),
+    ('interior design', 'Design', 'Interior Design'),
+    ('internet', 'Internet Services', 'Internet'),
+    ('internet radio', 'Media and Entertainment', 'Internet Radio'),
+    ('internet of things', 'Internet Services', 'Internet of Things'),
+    ('intrusion detection', 'Information Technology', 'Intrusion Detection'),
+    ('janitorial service', 'Real Estate', 'Janitorial Service'),
+    ('jewelry', 'Consumer Goods', 'Jewelry'),
+    ('journalism', 'Content and Publishing', 'Journalism'),
+    ('knowledge management', 'Administrative Services', 'Knowledge Management'),
+    ('lgbt', 'Community and Lifestyle', 'LGBT'),
+    ('landscaping', 'Real Estate', 'Landscaping'),
+    ('language learning', 'Education', 'Language Learning'),
+    ('laser', 'Hardware', 'Laser'),
+    ('last mile transportation', 'Transportation', 'Last Mile Transportation'),
+    ('laundry and dry-cleaning', 'Clothing and Apparel', 'Laundry and Dry-cleaning'),
+    ('law enforcement', 'Government and Military', 'Law Enforcement'),
+    ('lead generation', 'Sales and Marketing', 'Lead Generation'),
+    ('lead management', 'Sales and Marketing', 'Lead Management'),
+    ('leasing', 'Financial Services', 'Leasing'),
+    ('legal', 'Professional Services', 'Legal'),
+    ('legal tech', 'Professional Services', 'Legal Tech'),
+    ('leisure', 'Community and Lifestyle', 'Leisure'),
+    ('lending', 'Financial Services', 'Lending'),
+    ('life insurance', 'Financial Services', 'Life Insurance'),
+    ('life science', 'Biotechnology', 'Life Science'),
+    ('lifestyle', 'Community and Lifestyle', 'Lifestyle'),
+    ('lighting', 'Hardware', 'Lighting'),
+    ('limousine service', 'Transportation', 'Limousine Service'),
+    ('lingerie', 'Clothing and Apparel', 'Lingerie'),
+    ('linux', 'Platforms', 'Linux'),
+    ('livestock', 'Agriculture and Farming', 'Livestock'),
+    ('local', 'Sales and Marketing', 'Local'),
+    ('local advertising', 'Advertising', 'Local Advertising'),
+    ('local business', 'Sales and Marketing', 'Local Business'),
+    ('local shopping', 'Commerce and Shopping', 'Local Shopping'),
+    ('location based services', 'Data and Analytics', 'Location Based Services'),
+    ('logistics', 'Transportation', 'Logistics'),
+    ('loyalty programs', 'Sales and Marketing', 'Loyalty Programs'),
+    ('mmo games', 'Gaming', 'MMO Games'),
+    ('mooc', 'Education', 'MOOC'),
+    ('machine learning', 'Artificial Intelligence', 'Machine Learning'),
+    ('machinery manufacturing', 'Manufacturing', 'Machinery Manufacturing'),
+    ('made to order', 'Commerce and Shopping', 'Made to Order'),
+    ('management consulting', 'Professional Services', 'Management Consulting'),
+    ('management information systems', 'Information Technology', 'Management Information Systems'),
+    ('manufacturing', 'Manufacturing', 'Manufacturing'),
+    ('mapping services', 'Navigation and Mapping', 'Mapping Services'),
+    ('marine technology', 'Science and Engineering', 'Marine Technology'),
+    ('marine transportation', 'Transportation', 'Marine Transportation'),
+    ('market research', 'Data and Analytics', 'Market Research'),
+    ('marketing', 'Sales and Marketing', 'Marketing'),
+    ('marketing automation', 'Sales and Marketing', 'Marketing Automation'),
+    ('marketplace', 'Commerce and Shopping', 'Marketplace'),
+    ('mechanical design', 'Design', 'Mechanical Design'),
+    ('mechanical engineering', 'Science and Engineering', 'Mechanical Engineering'),
+    ('media and entertainment', 'Media and Entertainment', 'Media and Entertainment'),
+    ('medical', 'Health Care', 'Medical'),
+    ('medical device', 'Health Care', 'Medical Device'),
+    ('meeting software', 'Messaging and Telecommunications', 'Meeting Software'),
+    ("men's", 'Community and Lifestyle', "Men's"),
+    ('messaging', 'Information Technology', 'Messaging'),
+    ('micro lending', 'Financial Services', 'Micro Lending'),
+    ('military', 'Government and Military', 'Military'),
+    ('mineral', 'Natural Resources', 'Mineral'),
+    ('mining', 'Natural Resources', 'Mining'),
+    ('mining technology', 'Natural Resources', 'Mining Technology'),
+    ('mobile', 'Mobile', 'Mobile'),
+    ('mobile advertising', 'Advertising', 'Mobile Advertising'),
+    ('mobile apps', 'Apps', 'Mobile Apps'),
+    ('mobile devices', 'Consumer Electronics', 'Mobile Devices'),
+    ('mobile payments', 'Financial Services', 'Mobile Payments'),
+    ('motion capture', 'Media and Entertainment', 'Motion Capture'),
+    ('multi-level marketing', 'Sales and Marketing', 'Multi-level Marketing'),
+    ('museums and historical sites', 'Travel and Tourism', 'Museums and Historical Sites'),
+    ('music', 'Media and Entertainment', 'Music'),
+    ('music education', 'Education', 'Music Education'),
+    ('music label', 'Media and Entertainment', 'Music Label'),
+    ('music streaming', 'Internet Services', 'Music Streaming'),
+    ('music venues', 'Media and Entertainment', 'Music Venues'),
+    ('musical instruments', 'Media and Entertainment', 'Musical Instruments'),
+    ('nfc', 'Hardware', 'NFC'),
+    ('nanotechnology', 'Science and Engineering', 'Nanotechnology'),
+    ('national security', 'Government and Military', 'National Security'),
+    ('natural language processing', 'Artificial Intelligence', 'Natural Language Processing'),
+    ('natural resources', 'Natural Resources', 'Natural Resources'),
+    ('navigation', 'Navigation and Mapping', 'Navigation'),
+    ('network hardware', 'Hardware', 'Network Hardware'),
+    ('network security', 'Information Technology', 'Network Security'),
+    ('neuroscience', 'Biotechnology', 'Neuroscience'),
+    ('news', 'Content and Publishing', 'News'),
+    ('nightclubs', 'Events', 'Nightclubs'),
+    ('nightlife', 'Events', 'Nightlife'),
+    ('nintendo', 'Consumer Electronics', 'Nintendo'),
+    ('non profit', 'Social Impact', 'Non Profit'),
+    ('nuclear', 'Science and Engineering', 'Nuclear'),
+    ('nursing and residential care', 'Health Care', 'Nursing and Residential Care'),
+    ('nutraceutical', 'Health Care', 'Nutraceutical'),
+    ('nutrition', 'Food and Beverage', 'Nutrition'),
+    ('office administration', 'Administrative Services', 'Office Administration'),
+    ('oil and gas', 'Energy', 'Oil and Gas'),
+    ('online auctions', 'Commerce and Shopping', 'Online Auctions'),
+    ('online forums', 'Community and Lifestyle', 'Online Forums'),
+    ('online games', 'Gaming', 'Online Games'),
+    ('online portals', 'Internet Services', 'Online Portals'),
+    ('open source', 'Software', 'Open Source'),
+    ('operating systems', 'Platforms', 'Operating Systems'),
+    ('optical communication', 'Hardware', 'Optical Communication'),
+    ('organic', 'Sustainability', 'Organic'),
+    ('organic food', 'Food and Beverage', 'Organic Food'),
+    ('outdoor advertising', 'Advertising', 'Outdoor Advertising'),
+    ('outdoors', 'Sports', 'Outdoors'),
+    ('outpatient care', 'Health Care', 'Outpatient Care'),
+    ('outsourcing', 'Professional Services', 'Outsourcing'),
+    ('pc games', 'Gaming', 'PC Games'),
+    ('paas', 'Software', 'PaaS'),
+    ('packaging services', 'Administrative Services', 'Packaging Services'),
+    ('paper manufacturing', 'Manufacturing', 'Paper Manufacturing'),
+    ('parenting', 'Community and Lifestyle', 'Parenting'),
+    ('parking', 'Transportation', 'Parking'),
+    ('parks', 'Travel and Tourism', 'Parks'),
+    ('payments', 'Financial Services', 'Payments'),
+    ('peer to peer', 'Collaboration', 'Peer to Peer'),
+    ('penetration testing', 'Information Technology', 'Penetration Testing'),
+    ('performing arts', 'Media and Entertainment', 'Performing Arts'),
+    ('personal branding', 'Sales and Marketing', 'Personal Branding'),
+    ('personal finance', 'Health Care', 'Personal Finance'),
+    ('personal health', 'Health Care', 'Personal Health'),
+    ('personalization', 'Commerce and Shopping', 'Personalization'),
+    ('pet', 'Community and Lifestyle', 'Pet'),
+    ('pharmaceutical', 'Health Care', 'Pharmaceutical'),
+    ('photo editing', 'Content and Publishing', 'Photo Editing'),
+    ('photo sharing', 'Content and Publishing', 'Photo Sharing'),
+    ('photography', 'Content and Publishing', 'Photography'),
+    ('physical security', 'Administrative Services', 'Physical Security'),
+    ('plastics and rubber manufacturing', 'Manufacturing', 'Plastics and Rubber Manufacturing'),
+    ('playstation', 'Consumer Electronics', 'Playstation'),
+    ('podcast', 'Media and Entertainment', 'Podcast'),
+    ('point of sale', 'Commerce and Shopping', 'Point of Sale'),
+    ('politics', 'Government and Military', 'Politics'),
+    ('pollution control', 'Sustainability', 'Pollution Control'),
+    ('ports and harbors', 'Transportation', 'Ports and Harbors'),
+    ('power grid', 'Energy', 'Power Grid'),
+    ('precious metals', 'Natural Resources', 'Precious Metals'),
+    ('prediction markets', 'Financial Services', 'Prediction Markets'),
+    ('predictive analytics', 'Artificial Intelligence', 'Predictive Analytics'),
+    ('presentation software', 'Software', 'Presentation Software'),
+    ('presentations', 'Software', 'Presentations'),
+    ('price comparison', 'Commerce and Shopping', 'Price Comparison'),
+    ('primary education', 'Education', 'Primary Education'),
+    ('printing', 'Content and Publishing', 'Printing'),
+    ('privacy', 'Privacy and Security', 'Privacy'),
+    ('private cloud', 'Hardware', 'Private Cloud'),
+    ('private social networking', 'Community and Lifestyle', 'Private Social Networking'),
+    ('procurement', 'Transportation', 'Procurement'),
+    ('product design', 'Design', 'Product Design'),
+    ('product management', 'Software', 'Product Management'),
+    ('product research', 'Data and Analytics', 'Product Research'),
+    ('product search', 'Internet Services', 'Product Search'),
+    ('productivity tools', 'Software', 'Productivity Tools'),
+    ('professional networking', 'Community and Lifestyle', 'Professional Networking'),
+    ('professional services', 'Professional Services', 'Professional Services'),
+    ('project management', 'Administrative Services', 'Project Management'),
+    ('property development', 'Real Estate', 'Property Development'),
+    ('property insurance', 'Financial Services', 'Property Insurance'),
+    ('property management', 'Real Estate', 'Property Management'),
+    ('psychology', 'Health Care', 'Psychology'),
+    ('public relations', 'Sales and Marketing', 'Public Relations'),
+    ('public safety', 'Government and Military', 'Public Safety'),
+    ('public transportation', 'Transportation', 'Public Transportation'),
+    ('publishing', 'Content and Publishing', 'Publishing'),
+    ('q&a', 'Community and Lifestyle', 'Q&A'),
+    ('qr codes', 'Software', 'QR Codes'),
+    ('quality assurance', 'Professional Services', 'Quality Assurance'),
+    ('quantified self', 'Biotechnology', 'Quantified Self'),
+    ('quantum computing', 'Science and Engineering', 'Quantum Computing'),
+    ('rfid', 'Hardware', 'RFID'),
+    ('risc', 'Hardware', 'RISC'),
+    ('racing', 'Sports', 'Racing'),
+    ('railroad', 'Transportation', 'Railroad'),
+    ('reading apps', 'Apps', 'Reading Apps'),
+    ('real estate', 'Real Estate', 'Real Estate'),
+    ('real estate investment', 'Financial Services', 'Real Estate Investment'),
+    ('recipes', 'Food and Beverage', 'Recipes'),
+    ('recreation', 'Sports', 'Recreation'),
+    ('recreational vehicles', 'Transportation', 'Recreational Vehicles'),
+    ('recruiting', 'Professional Services', 'Recruiting'),
+    ('recycling', 'Sustainability', 'Recycling'),
+    ('rehabilitation', 'Health Care', 'Rehabilitation'),
+    ('religion', 'Community and Lifestyle', 'Religion'),
+    ('renewable energy', 'Energy', 'Renewable Energy'),
+    ('rental', 'Commerce and Shopping', 'Rental'),
+    ('rental property', 'Real Estate', 'Rental Property'),
+    ('reputation', 'Information Technology', 'Reputation'),
+    ('reservations', 'Events', 'Reservations'),
+    ('residential', 'Real Estate', 'Residential'),
+    ('resorts', 'Travel and Tourism', 'Resorts'),
+    ('restaurants', 'Food and Beverage', 'Restaurants'),
+    ('retail', 'Commerce and Shopping', 'Retail'),
+    ('retail technology', 'Commerce and Shopping', 'Retail Technology'),
+    ('retirement', 'Community and Lifestyle', 'Retirement'),
+    ('ride sharing', 'Transportation', 'Ride Sharing'),
+    ('risk management', 'Professional Services', 'Risk Management'),
+    ('robotics', 'Hardware', 'Robotics'),
+    ('roku', 'Consumer Electronics', 'Roku'),
+    ('rugby', 'Sports', 'Rugby'),
+    ('sem', 'Advertising', 'SEM'),
+    ('seo', 'Internet Services', 'SEO'),
+    ('sms', 'Internet Services', 'SMS'),
+    ('sns', 'Software', 'SNS'),
+    ('stem education', 'Education', 'STEM Education'),
+    ('saas', 'Software', 'SaaS'),
+    ('sailing', 'Sports', 'Sailing'),
+    ('sales', 'Sales and Marketing', 'Sales'),
+    ('sales automation', 'Information Technology', 'Sales Automation'),
+    ('same day delivery', 'Transportation', 'Same Day Delivery'),
+    ('satellite communication', 'Hardware', 'Satellite Communication'),
+    ('scheduling', 'Information Technology', 'Scheduling'),
+    ('seafood', 'Food and Beverage', 'Seafood'),
+    ('search engine', 'Internet Services', 'Search Engine'),
+    ('secondary education', 'Education', 'Secondary Education'),
+    ('security', 'Privacy and Security', 'Security'),
+    ('self-storage', 'Real Estate', 'Self-Storage'),
+    ('semantic search', 'Internet Services', 'Semantic Search'),
+    ('semantic web', 'Internet Services', 'Semantic Web'),
+    ('semiconductor', 'Hardware', 'Semiconductor'),
+    ('sensor', 'Hardware', 'Sensor'),
+    ('sharing economy', 'Collaboration', 'Sharing Economy'),
+    ('shipping', 'Transportation', 'Shipping'),
+    ('shipping broker', 'Transportation', 'Shipping Broker'),
+    ('shoes', 'Clothing and Apparel', 'Shoes'),
+    ('shopping', 'Commerce and Shopping', 'Shopping'),
+    ('shopping mall', 'Commerce and Shopping', 'Shopping Mall'),
+    ('simulation', 'Software', 'Simulation'),
+    ('skiing', 'Sports', 'Skiing'),
+    ('skill assessment', 'Education', 'Skill Assessment'),
+    ('smart building', 'Real Estate', 'Smart Building'),
+    ('smart cities', 'Real Estate', 'Smart Cities'),
+    ('smart home', 'Consumer Electronics', 'Smart Home'),
+    ('snack food', 'Food and Beverage', 'Snack Food'),
+    ('soccer', 'Sports', 'Soccer'),
+    ('social', 'Community and Lifestyle', 'Social'),
+    ('social assistance', 'Government and Military', 'Social Assistance'),
+    ('social bookmarking', 'Content and Publishing', 'Social Bookmarking'),
+    ('social crm', 'Information Technology', 'Social CRM'),
+    ('social entrepreneurship', 'Community and Lifestyle', 'Social Entrepreneurship'),
+    ('social impact', 'Social Impact', 'Social Impact'),
+    ('social media', 'Internet Services', 'Social Media'),
+    ('social media advertising', 'Advertising', 'Social Media Advertising'),
+    ('social media management', 'Internet Services', 'Social Media Management'),
+    ('social media marketing', 'Sales and Marketing', 'Social Media Marketing'),
+    ('social network', 'Internet Services', 'Social Network'),
+    ('social news', 'Media and Entertainment', 'Social News'),
+    ('social recruiting', 'Professional Services', 'Social Recruiting'),
+    ('social shopping', 'Commerce and Shopping', 'Social Shopping'),
+    ('software', 'Software', 'Software'),
+    ('software engineering', 'Science and Engineering', 'Software Engineering'),
+    ('solar', 'Energy', 'Solar'),
+    ('space travel', 'Transportation', 'Space Travel'),
+    ('spam filtering', 'Information Technology', 'Spam Filtering'),
+    ('speech recognition', 'Data and Analytics', 'Speech Recognition'),
+    ('sponsorship', 'Sales and Marketing', 'Sponsorship'),
+    ('sporting goods', 'Commerce and Shopping', 'Sporting Goods'),
+    ('sports', 'Sports', 'Sports'),
+    ('staffing agency', 'Administrative Services', 'Staffing Agency'),
+    ('stock exchanges', 'Financial Services', 'Stock Exchanges'),
+    ('supply chain management', 'Transportation', 'Supply Chain Management'),
+    ('surfing', 'Sports', 'Surfing'),
+    ('sustainability', 'Sustainability', 'Sustainability'),
+    ('swimming', 'Sports', 'Swimming'),
+    ('tv', 'Media and Entertainment', 'TV'),
+    ('tv production', 'Media and Entertainment', 'TV Production'),
+    ('table tennis', 'Sports', 'Table Tennis'),
+    ('task management', 'Software', 'Task Management'),
+    ('taxi service', 'Transportation', 'Taxi Service'),
+    ('tea', 'Food and Beverage', 'Tea'),
+    ('technical support', 'Information Technology', 'Technical Support'),
+    ('teenagers', 'Community and Lifestyle', 'Teenagers'),
+    ('telecommunications', 'Hardware', 'Telecommunications'),
+    ('tennis', 'Sports', 'Tennis'),
+    ('test and measurement', 'Data and Analytics', 'Test and Measurement'),
+    ('text analytics', 'Data and Analytics', 'Text Analytics'),
+    ('textbook', 'Education', 'Textbook'),
+    ('textiles', 'Manufacturing', 'Textiles'),
+    ('theatre', 'Media and Entertainment', 'Theatre'),
+    ('therapeutics', 'Health Care', 'Therapeutics'),
+    ('ticketing', 'Events', 'Ticketing'),
+    ('timber', 'Natural Resources', 'Timber'),
+    ('timeshare', 'Real Estate', 'Timeshare'),
+    ('tizen', 'Platforms', 'Tizen'),
+    ('tobacco', 'Consumer Goods', 'Tobacco'),
+    ('tour operator', 'Travel and Tourism', 'Tour Operator'),
+    ('tourism', 'Travel and Tourism', 'Tourism'),
+    ('toys', 'Consumer Goods', 'Toys'),
+    ('trade shows', 'Administrative Services', 'Trade Shows'),
+    ('trading platform', 'Financial Services', 'Trading Platform'),
+    ('training', 'Education', 'Training'),
+    ('transaction processing', 'Financial Services', 'Transaction Processing'),
+    ('translation service', 'Professional Services', 'Translation Service'),
+    ('transportation', 'Transportation', 'Transportation'),
+    ('travel', 'Travel and Tourism', 'Travel'),
+    ('travel accommodations', 'Travel and Tourism', 'Travel Accommodations'),
+    ('travel agency', 'Travel and Tourism', 'Travel Agency'),
+    ('tutoring', 'Education', 'Tutoring'),
+    ('twitter', 'Platforms', 'Twitter'),
+    ('ux design', 'Design', 'UX Design'),
+    ('ultimate frisbee', 'Sports', 'Ultimate Frisbee'),
+    ('unified communications', 'Information Technology', 'Unified Communications'),
+    ('universities', 'Education', 'Universities'),
+    ('usability testing', 'Data and Analytics', 'Usability Testing'),
+    ('vacation rental', 'Real Estate', 'Vacation Rental'),
+    ('vending and concessions', 'Commerce and Shopping', 'Vending and Concessions'),
+    ('venture capital', 'Financial Services', 'Venture Capital'),
+    ('vertical search', 'Internet Services', 'Vertical Search'),
+    ('veterinary', 'Health Care', 'Veterinary'),
+    ('video', 'Media and Entertainment', 'Video'),
+    ('video advertising', 'Advertising', 'Video Advertising'),
+    ('video chat', 'Information Technology', 'Video Chat'),
+    ('video conferencing', 'Hardware', 'Video Conferencing'),
+    ('video editing', 'Content and Publishing', 'Video Editing'),
+    ('video games', 'Gaming', 'Video Games'),
+    ('video streaming', 'Content and Publishing', 'Video Streaming'),
+    ('video on demand', 'Media and Entertainment', 'Video on Demand'),
+    ('virtual assistant', 'Software', 'Virtual Assistant'),
+    ('virtual currency', 'Financial Services', 'Virtual Currency'),
+    ('virtual desktop', 'Software', 'Virtual Desktop'),
+    ('virtual goods', 'Commerce and Shopping', 'Virtual Goods'),
+    ('virtual reality', 'Hardware', 'Virtual Reality'),
+    ('virtual workforce', 'Administrative Services', 'Virtual Workforce'),
+    ('virtual world', 'Community and Lifestyle', 'Virtual World'),
+    ('virtualization', 'Hardware', 'Virtualization'),
+    ('visual search', 'Internet Services', 'Visual Search'),
+    ('voip', 'Information Technology', 'VoIP'),
+    ('vocational education', 'Education', 'Vocational Education'),
+    ('volleyball', 'Sports', 'Volleyball'),
+    ('warehousing', 'Transportation', 'Warehousing'),
+    ('waste management', 'Sustainability', 'Waste Management'),
+    ('water', 'Natural Resources', 'Water'),
+    ('water purification', 'Sustainability', 'Water Purification'),
+    ('water transportation', 'Transportation', 'Water Transportation'),
+    ('wealth management', 'Financial Services', 'Wealth Management'),
+    ('wearables', 'Consumer Electronics', 'Wearables'),
+    ('web apps', 'Apps', 'Web Apps'),
+    ('web browsers', 'Internet Services', 'Web Browsers'),
+    ('web design', 'Design', 'Web Design'),
+    ('web development', 'Software', 'Web Development'),
+    ('web hosting', 'Internet Services', 'Web Hosting'),
+    ('web3 fund', 'Financial Services', 'Web3 Fund'),
+    ('web3 investor', 'Financial Services', 'Web3 Investor'),
+    ('webos', 'Platforms', 'WebOS'),
+    ('wedding', 'Community and Lifestyle', 'Wedding'),
+    ('wellness', 'Health Care', 'Wellness'),
+    ('wholesale', 'Commerce and Shopping', 'Wholesale'),
+    ('wind energy', 'Energy', 'Wind Energy'),
+    ('windows', 'Platforms', 'Windows'),
+    ('windows phone', 'Consumer Electronics', 'Windows Phone'),
+    ('wine and spirits', 'Food and Beverage', 'Wine And Spirits'),
+    ('winery', 'Food and Beverage', 'Winery'),
+    ('wired telecommunications', 'Messaging and Telecommunications', 'Wired Telecommunications'),
+    ('wireless', 'Hardware', 'Wireless'),
+    ("women's", 'Community and Lifestyle', "Women's"),
+    ('wood processing', 'Manufacturing', 'Wood Processing'),
+    ('xbox', 'Consumer Electronics', 'Xbox'),
+    ('young adults', 'Community and Lifestyle', 'Young Adults'),
+    ('esports', 'Sports', 'eSports'),
+    ('ios', 'Mobile', 'iOS'),
+    ('mhealth', 'Health Care', 'mHealth'),
+    ('macos', 'Platforms', 'macOS'),
+]
 
 def _classify_industry(text: str, hint: str = "") -> Tuple[str, str]:
-    """Return (industry, sub_industry) from free text, defaulting to Tech & AI / SaaS."""
+    """
+    Return (industry, sub_industry) from free text using the 725-entry taxonomy.
+    Picks the longest matching keyword so "machine learning" beats "machine".
+    Defaults to Software / SaaS when nothing matches.
+    """
     combined = (text + " " + hint).lower()
-    best_ind = "Tech & AI"
+    best_ind = "Software"
     best_sub = "SaaS"
     best_len = 0
     for kw, ind, sub in _IND_KEYWORDS:
@@ -1096,7 +1842,7 @@ def _scrape_company(seed: Dict) -> List[Dict]:
 # SOURCE 6 — DuckDuckGo + Bing + SerpAPI search
 # ══════════════════════════════════════════════════════════════
 # ─────────────────────────────────────────────────────────────────────────────
-SEARCH_INDUSTRIES = list(INDUSTRY_TAXONOMY.keys())
+SEARCH_INDUSTRIES = sorted(VALID_INDUSTRIES)  # all 50 parent industries
 SEARCH_REGIONS = [
     "San Francisco","New York","London","Berlin","Paris","Amsterdam","Stockholm",
     "Tel Aviv","Bangalore","Toronto","Sydney","Seoul","Tokyo","Singapore","Dubai",
@@ -1229,12 +1975,15 @@ async def get_leads_free(
         print(f"   ✅ [{len(collected)}] {b} | {e} | {r} | {li}")
         return True
 
-    # ── Phase 0: Existing pool ────────────────────────────────────────────────
+    # ── Phase 0: Serve from existing pool ───────────────────────────────────
     print(f"\n📦 Phase 0: existing pool...")
-    for lead in _load_pool(num_leads * 5):
+    for lead in _load_pool(num_leads * 10):
         collected.append(lead)
     print(f"   {len(collected)} from pool")
+    # If pool already has enough, return immediately so miner isn't blocked.
+    # Discovery phases below will keep running on next call to grow pool further.
     if len(collected) >= num_leads:
+        print(f"   ✅ Served {num_leads} from pool — continuing discovery in background")
         return collected[:num_leads]
 
     # ── Phase 1: GitHub org members ───────────────────────────────────────────
@@ -1251,8 +2000,7 @@ async def get_leads_free(
             _accept(lead)
         await asyncio.sleep(0.5)
 
-    if len(collected) >= num_leads:
-        return collected[:num_leads]
+    # Phase 1 done — continue into Phase 2 regardless
 
     # ── Phase 2: YC companies → Hunter.io + scrape ───────────────────────────
     print(f"\n🍊 Phase 2: YC directory (~4000 companies)...")
@@ -1275,8 +2023,7 @@ async def get_leads_free(
                 _accept(lead)
             await asyncio.sleep(random.uniform(0.5, 1.5))
 
-    if len(collected) >= num_leads:
-        return collected[:num_leads]
+    # Phase 2 done — continue into Phase 3 regardless
 
     # ── Phase 3: Wikipedia unicorns → Hunter.io + scrape ─────────────────────
     print(f"\n📚 Phase 3: Wikipedia unicorns...")
@@ -1295,8 +2042,7 @@ async def get_leads_free(
             _accept(lead)
         await asyncio.sleep(random.uniform(0.5, 1.5))
 
-    if len(collected) >= num_leads:
-        return collected[:num_leads]
+    # Phase 3 done — continue into Phase 4 (infinite loop) regardless
 
     # ── Phase 4: Search engine discovery (infinite) ───────────────────────────
     print(f"\n🔍 Phase 4: Search engine discovery (infinite)...")
@@ -1305,7 +2051,7 @@ async def get_leads_free(
     found:    Set[str] = set(cache.get("found_domains",[])) | _seen_domains
     s_round   = 0
 
-    while len(collected) < num_leads:
+    while True:  # ∞ — runs until miner.py cancels the coroutine
         s_round += 1
         print(f"\n   🔄 Search round {s_round} ({len(collected)}/{num_leads})")
         queries   = _gen_queries(industry, region, n=100)
@@ -1370,8 +2116,6 @@ async def get_leads_free(
 
         print(f"   🏗️  Scraping {len(untried)} pages...")
         for i in range(0, len(untried), 5):
-            if len(collected) >= num_leads:
-                break
             batch = untried[i:i+5]
             for res in await asyncio.gather(
                 *[loop.run_in_executor(None, _scrape_company, s) for s in batch],
@@ -1542,32 +2286,66 @@ if not deps_ok:
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import time as _t
-    async def _loop():
-        """
-        Developer utility: run the free/paid pipeline in an infinite loop.
 
-        This is for local scraping only (no Bittensor). Each iteration:
-          - calls get_leads(10)
-          - prints a short summary
-          - sleeps a bit
-        Leads are also persisted to data/leads_found.jsonl and reused by the miner.
-        """
-        batch_size = 10
-        delay_sec  = 30
-        round_id   = 0
-        while True:
-            round_id += 1
-            t0 = _t.time()
-            print(f"\n🧪 Scrape round {round_id} — target {batch_size} leads")
-            leads = await get_leads(batch_size)
-            dt = _t.time() - t0
-            print(f"⏱️  Round {round_id}: {len(leads)} leads in {dt:.1f}s")
-            if leads:
-                uniq = len({l.get('business','') for l in leads})
-                print(f"   Unique companies this round: {uniq}")
-                sample = leads[0]
-                print(f"   Sample: {sample.get('business')} | {sample.get('email','—')} | {sample.get('role','')}")
-            print(f"💤 Sleeping {delay_sec}s before next round...\n")
-            await asyncio.sleep(delay_sec)
+    # Run infinite discovery — prints every lead as it arrives.
+    # Ctrl+C to stop. The pool in data/leads_found.jsonl keeps growing.
+    TARGET = int(sys.argv[1]) if len(sys.argv) > 1 else 0  # 0 = infinite
+    print(f"🚀 Infinite lead pipeline — {'target: ' + str(TARGET) if TARGET else 'no cap, Ctrl+C to stop'}\n")
 
-    asyncio.run(_loop())
+    async def _run_infinite():
+        global _total_printed
+        _total_printed = 0
+        t0 = _t.time()
+        _load_store()
+        _load_csv_domains()
+        loop = asyncio.get_running_loop()
+
+        def _show(lead: dict):
+            global _total_printed
+            _total_printed += 1
+            n     = _total_printed
+            b     = lead.get("business","?")
+            e     = lead.get("email","—")
+            r     = lead.get("role","")
+            li    = lead.get("linkedin","") or lead.get("company_linkedin","") or "—"
+            ind   = lead.get("industry","")
+            sub   = lead.get("sub_industry","")
+            emp   = lead.get("employee_count","—")
+            city  = lead.get("city","")
+            ctry  = lead.get("country","")
+            fname = lead.get("full_name","")
+            print(f"\n#{n} ── {b}")
+            print(f"   📧 {e}  |  👤 {fname}  |  💼 {r}")
+            print(f"   🌐 {lead.get('website','')}  |  📍 {city}, {ctry}")
+            print(f"   🏷️  {ind} / {sub}  |  👥 {emp}")
+            print(f"   🔗 {li}")
+            if TARGET and _total_printed >= TARGET:
+                elapsed = _t.time() - t0
+                print(f"\n✅ Reached target {TARGET} leads in {elapsed:.1f}s")
+                print(f"   Unique companies: {len(set(open(str(LEADS_JSONL)).read().splitlines()))}")
+                sys.exit(0)
+
+        # Monkey-patch _persist so every new lead gets printed immediately
+        _orig_persist = globals().get("_persist")
+        def _patched_persist(lead):
+            _orig_persist(lead)
+            _show(lead)
+        import builtins
+        # inject into module namespace
+        global _persist
+        _orig_p = _persist
+        def _persist_and_show(lead):  # noqa
+            _orig_p(lead)
+            _show(lead)
+
+        # override globally so pipeline uses our version
+        import main_leads as _ml
+        _ml._persist = _persist_and_show
+
+        # Run full pipeline — never returns unless Ctrl+C or TARGET hit
+        await get_leads_free(10**9)  # effectively infinite
+
+    try:
+        asyncio.run(_run_infinite())
+    except (KeyboardInterrupt, SystemExit):
+        print(f"\n⛔ Stopped. Pool saved to {LEADS_JSONL}")
