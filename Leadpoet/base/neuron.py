@@ -32,7 +32,7 @@ class BaseNeuron:
             if not hasattr(self.config, 'subtensor') or not hasattr(self.config.subtensor, 'chain_endpoint'):
                 self.config.subtensor = bt.Config()
                 self.config.subtensor.network = "test"
-                self.config.subtensor.chain_endpoint = "wss://test.mainnet.opentensor.ai:443"
+                self.config.subtensor.chain_endpoint = "wss://test.finney.opentensor.ai:443"
             self.subtensor = bt.subtensor(config=self.config)
             bt.logging.info(f"Subtensor initialized, endpoint: {self.subtensor.chain_endpoint}, network: {self.config.subtensor.network}")
         except Exception as e:

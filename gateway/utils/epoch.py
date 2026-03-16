@@ -21,7 +21,7 @@ EPOCH_DURATION_BLOCKS = 360  # 72 minutes = 360 blocks × 12 sec
 BITTENSOR_BLOCK_TIME_SECONDS = 12
 
 # Network for epoch tracking (from environment variable)
-_epoch_network = os.getenv("BITTENSOR_NETWORK", "mainnet")
+_epoch_network = os.getenv("BITTENSOR_NETWORK", "finney")
 
 # Block caching for resilient estimation (must match validator/reward.py)
 _last_known_block = None
@@ -50,7 +50,7 @@ def inject_async_subtensor(async_subtensor):
     
     Example:
         # In main.py lifespan:
-        async with bt.AsyncSubtensor(network="mainnet") as async_sub:
+        async with bt.AsyncSubtensor(network="finney") as async_sub:
             epoch_utils.inject_async_subtensor(async_sub)
     """
     global _async_subtensor, _sync_subtensor

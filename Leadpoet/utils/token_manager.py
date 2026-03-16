@@ -25,7 +25,7 @@ class TokenManager:
             wallet: Bittensor wallet instance (required for signing)
             token_endpoint: URL of JWT issuance endpoint
             netuid: Subnet ID (e.g., 71 for mainnet, 401 for testnet)
-            network: Network name ('mainnet' for mainnet, 'test' for testnet)
+            network: Network name ('finney' for mainnet, 'test' for testnet)
         """
         self.hotkey = hotkey
         self.wallet = wallet

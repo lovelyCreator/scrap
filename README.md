@@ -95,7 +95,7 @@ pip install -e .
 ```bash
 btcli subnet register \
     --netuid 71 \
-    --subtensor.network mainnet \
+    --subtensor.network finney \
     --wallet.name miner \
     --wallet.hotkey default
 ```
@@ -107,7 +107,7 @@ python neurons/miner.py \
     --wallet_hotkey default \
     --wallet_path <your_wallet_path> \  # Optional: custom wallet directory (default: ~/.bittensor/wallets)
     --netuid 71 \
-    --subtensor_network mainnet
+    --subtensor_network finney
 ```
 
 ### How Miners Work
@@ -586,7 +586,7 @@ python neurons/miner.py submit-model \
 ```bash
 btcli stake add \
     --amount <amount> \
-    --subtensor.network mainnet \
+    --subtensor.network finney \
     --wallet.name validator \
     --wallet.hotkey default
 ```
@@ -595,7 +595,7 @@ btcli stake add \
 ```bash
 btcli subnet register \
     --netuid 71 \
-    --subtensor.network mainnet \
+    --subtensor.network finney \
     --wallet.name validator \
     --wallet.hotkey default
 ```
@@ -607,7 +607,7 @@ python neurons/validator.py \
     --wallet_hotkey default \
     --wallet_path <your_wallet_path> \  # Optional: custom wallet directory (default: ~/.bittensor/wallets)
     --netuid 71 \
-    --subtensor_network mainnet
+    --subtensor_network finney
 ```
 
 Note: Validators are configured to auto-update from GitHub on a 5-minute interval.
@@ -631,7 +631,7 @@ For validators who want to run a lightweight alternative that copies TEE-verifie
 ```bash
 python neurons/auditor_validator.py \
     --netuid 71 \
-    --subtensor.network mainnet \
+    --subtensor.network finney \
     --wallet.name validator \
     --wallet.hotkey default
 ```

@@ -70,7 +70,7 @@ _allowed_netuids_str = os.environ.get("ALLOWED_NETUIDS", "")
 ALLOWED_NETUIDS: Set[int] = {int(x) for x in _allowed_netuids_str.split(",") if x.strip().isdigit()}
 
 # Chain endpoint for binding message verification
-EXPECTED_CHAIN = os.environ.get("EXPECTED_CHAIN", "wss://entrypoint-mainnet.opentensor.ai:443")
+EXPECTED_CHAIN = os.environ.get("EXPECTED_CHAIN", "wss://entrypoint-finney.opentensor.ai:443")
 
 # Subtensor for block validation (lazily initialized)
 _subtensor = None

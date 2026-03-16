@@ -65,7 +65,7 @@ S3_REGION = os.getenv("QUAL_S3_REGION", "us-east-2")  # leadpoet-leads-primary i
 TEMP_DIR = os.getenv("QUAL_TEMP_DIR", "/tmp/qualification")
 
 # Bittensor Configuration
-SUBTENSOR_ENDPOINT = os.getenv("SUBTENSOR_ENDPOINT", "wss://entrypoint-mainnet.opentensor.ai:443")
+SUBTENSOR_ENDPOINT = os.getenv("SUBTENSOR_ENDPOINT", "wss://entrypoint-finney.opentensor.ai:443")
 SUBNET_NETUID = int(os.getenv("SUBNET_NETUID", "41"))
 
 
@@ -759,7 +759,7 @@ async def get_current_bittensor_epoch() -> int:
         loop = asyncio.get_event_loop()
         
         def _get_block():
-            subtensor = bt.subtensor(network="mainnet")  # mainnet
+            subtensor = bt.subtensor(network="finney")
             return subtensor.block
         
         return await loop.run_in_executor(None, _get_block)
@@ -828,7 +828,7 @@ async def is_hotkey_registered(hotkey: str, netuid: int = SUBNET_NETUID) -> bool
         loop = asyncio.get_event_loop()
         
         def _check_registration():
-            subtensor = bt.subtensor(network="mainnet")  # mainnet
+            subtensor = bt.subtensor(network="finney")
             metagraph = subtensor.metagraph(netuid)
             return hotkey in metagraph.hotkeys
         

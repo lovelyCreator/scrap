@@ -4,8 +4,8 @@ Qualification System: Bittensor Chain Interaction
 
 Provides chain interaction functions with DYNAMIC network support.
 Uses BITTENSOR_NETWORK environment variable to determine:
-- testnet: wss://test.mainnet.opentensor.ai:443
-- mainnet: wss://entrypoint-mainnet.opentensor.ai:443
+- testnet: wss://test.finney.opentensor.ai:443
+- finney (mainnet): wss://entrypoint-finney.opentensor.ai:443
 
 This module handles:
 - Block fetching and parsing
@@ -28,14 +28,14 @@ logger = logging.getLogger(__name__)
 # Network Configuration (Dynamic based on BITTENSOR_NETWORK)
 # =============================================================================
 
-# Default network is mainnet (mainnet), override with BITTENSOR_NETWORK env var
-BITTENSOR_NETWORK = os.getenv("BITTENSOR_NETWORK", "mainnet")
+# Default network is mainnet (finney), override with BITTENSOR_NETWORK env var
+BITTENSOR_NETWORK = os.getenv("BITTENSOR_NETWORK", "finney")
 BITTENSOR_NETUID = int(os.getenv("BITTENSOR_NETUID", "71"))
 
 # Network endpoints
 NETWORK_ENDPOINTS = {
-    "test": "wss://test.mainnet.opentensor.ai:443",
-    "mainnet": "wss://entrypoint-mainnet.opentensor.ai:443",
+    "test": "wss://test.finney.opentensor.ai:443",
+    "finney": "wss://entrypoint-finney.opentensor.ai:443",
     "local": "ws://127.0.0.1:9944",
 }
 
@@ -79,7 +79,7 @@ def get_network_endpoint() -> str:
     Returns:
         WebSocket URL for the Bittensor network
     """
-    endpoint = NETWORK_ENDPOINTS.get(BITTENSOR_NETWORK, NETWORK_ENDPOINTS["mainnet"])
+    endpoint = NETWORK_ENDPOINTS.get(BITTENSOR_NETWORK, NETWORK_ENDPOINTS["finney"])
     return endpoint
 
 
@@ -94,7 +94,7 @@ _substrate_lock = asyncio.Lock()
 
 def _get_current_network() -> str:
     """Get current network from environment (re-reads each time)."""
-    return os.getenv("BITTENSOR_NETWORK", "mainnet")
+    return os.getenv("BITTENSOR_NETWORK", "finney")
 
 
 async def get_substrate_interface():
@@ -112,7 +112,7 @@ async def get_substrate_interface():
     
     # Get the current expected endpoint (re-read from env)
     current_network = _get_current_network()
-    expected_endpoint = NETWORK_ENDPOINTS.get(current_network, NETWORK_ENDPOINTS["mainnet"])
+    expected_endpoint = NETWORK_ENDPOINTS.get(current_network, NETWORK_ENDPOINTS["finney"])
     
     async with _substrate_lock:
         # Check if we need to reconnect (endpoint changed or not connected)

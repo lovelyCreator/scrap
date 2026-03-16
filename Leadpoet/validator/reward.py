@@ -18,7 +18,7 @@ BITTENSOR_BLOCK_TIME_SECONDS = 12
 _current_epoch = None
 _epoch_start_block = None
 _epoch_lock = threading.Lock()
-_epoch_network = "mainnet"  # Default to mainnet
+_epoch_network = "finney"  # Default to mainnet
 
 # Block caching for resilient estimation
 _last_known_block = None
@@ -248,13 +248,13 @@ def _background_epoch_monitor():
         loop.close()
         print("🕐 Background epoch monitor stopped")
 
-def start_epoch_monitor(network: str = "mainnet"):
+def start_epoch_monitor(network: str = "finney"):
     """
     Start the background epoch monitoring thread.
     Should be called when the validator starts up.
     
     Args:
-        network: Bittensor network to connect to ("mainnet" for mainnet, "test" for testnet)
+        network: Bittensor network to connect to ("finney" for mainnet, "test" for testnet)
     """
     global _epoch_monitor_thread, _epoch_monitor_running, _epoch_network
     

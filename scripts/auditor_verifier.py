@@ -504,7 +504,7 @@ class AuditorVerifier:
             if binding_message and hotkey_signature and validator_hotkey:
                 expected_chain = os.environ.get(
                     "EXPECTED_CHAIN", 
-                    "wss://entrypoint-mainnet.opentensor.ai:443"
+                    "wss://entrypoint-finney.opentensor.ai:443"
                 )
                 
                 binding_ok = verify_binding_message(

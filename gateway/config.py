@@ -57,7 +57,7 @@ if not AWS_SECRET_ACCESS_KEY:
 # ============================================================
 # Bittensor Network
 # ============================================================
-BITTENSOR_NETWORK = os.getenv("BITTENSOR_NETWORK", "mainnet")
+BITTENSOR_NETWORK = os.getenv("BITTENSOR_NETWORK", "finney")
 BITTENSOR_NETUID = int(os.getenv("BITTENSOR_NETUID", "71"))
 
 # ============================================================

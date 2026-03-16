@@ -45,7 +45,7 @@ def inject_async_subtensor(async_subtensor):
     
     Example:
         # In main.py lifespan:
-        async with bt.AsyncSubtensor(network="mainnet") as async_sub:
+        async with bt.AsyncSubtensor(network="finney") as async_sub:
             registry_utils.inject_async_subtensor(async_sub)
     """
     global _async_subtensor

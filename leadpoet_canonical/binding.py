@@ -33,7 +33,7 @@ def create_binding_message(
     
     Args:
         netuid: Subnet ID (e.g., 71)
-        chain: Chain endpoint URL (e.g., "wss://entrypoint-mainnet.opentensor.ai:443")
+        chain: Chain endpoint URL (e.g., "wss://entrypoint-finney.opentensor.ai:443")
                Prevents cross-network replay between testnet and mainnet.
         enclave_pubkey: Hex-encoded Ed25519 public key of the validator's enclave
         validator_code_hash: Hash/PCR0 of the validator TEE code
@@ -47,12 +47,12 @@ def create_binding_message(
     Example:
         >>> create_binding_message(
         ...     netuid=71,
-        ...     chain="wss://entrypoint-mainnet.opentensor.ai:443",
+        ...     chain="wss://entrypoint-finney.opentensor.ai:443",
         ...     enclave_pubkey="abc123...",
         ...     validator_code_hash="def456...",
         ...     version="v1.0.0"
         ... )
-        'LEADPOET_VALIDATOR_BINDING|netuid=71|chain=wss://entrypoint-mainnet.opentensor.ai:443|enclave_pubkey=abc123...|validator_code_hash=def456...|version=v1.0.0'
+        'LEADPOET_VALIDATOR_BINDING|netuid=71|chain=wss://entrypoint-finney.opentensor.ai:443|enclave_pubkey=abc123...|validator_code_hash=def456...|version=v1.0.0'
     """
     if version is None:
         version = BINDING_MESSAGE_VERSION

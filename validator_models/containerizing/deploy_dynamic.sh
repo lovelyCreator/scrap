@@ -256,7 +256,7 @@ start_container() {
       $PROXY_ARGS \
       leadpoet-validator:latest \
       --netuid 71 \
-      --subtensor_network mainnet \
+      --subtensor_network finney \
       --wallet_name validator_72 \
       --wallet_hotkey default \
       --container-id "$CONTAINER_ID" \

@@ -3327,7 +3327,7 @@ class Validator(BaseValidatorNeuron):
             # Get expected chain endpoint for binding message
             expected_chain = os.environ.get(
                 "EXPECTED_CHAIN", 
-                "wss://entrypoint-mainnet.opentensor.ai:443"
+                "wss://entrypoint-finney.opentensor.ai:443"
             )
             
             # Get git commit for version info
@@ -8084,7 +8084,7 @@ def main():
     parser.add_argument("--wallet_hotkey", type=str, help="Wallet hotkey")
     parser.add_argument("--wallet_path", type=str, default="~/.bittensor/wallets", help="Path to wallets directory (default: ~/.bittensor/wallets)")
     parser.add_argument("--netuid", type=int, default=71, help="Network UID")
-    parser.add_argument("--subtensor_network", type=str, default=os.getenv("SUBTENSOR_NETWORK", "mainnet"), help="Subtensor network (default: mainnet, or from SUBTENSOR_NETWORK env var)")
+    parser.add_argument("--subtensor_network", type=str, default=os.getenv("SUBTENSOR_NETWORK", "finney"), help="Subtensor network (default: finney, or from SUBTENSOR_NETWORK env var)")
     parser.add_argument("--logging_trace", action="store_true", help="Enable trace logging")
     parser.add_argument("--container-id", type=int, help="Container ID (0, 1, 2, etc.) for dynamic lead distribution. Container 0 is coordinator.")
     parser.add_argument("--total-containers", type=int, help="Total number of containers running (for dynamic lead distribution)")
