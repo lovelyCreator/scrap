@@ -130,7 +130,18 @@ class Miner(BaseMinerNeuron):
         
         validated_leads = []
         
+        if not leads:
+            bt.logging.info("No new leads this cycle; nothing to validate")
+            return validated_leads
+        
         for lead in leads:
+            # If lead already has protocol-compliant proprietary_database provenance, accept it
+            existing_url = (lead.get("source_url") or "").strip()
+            existing_type = (lead.get("source_type") or "").strip()
+            if existing_url.lower() == "proprietary_database" and existing_type.lower() == "proprietary_database":
+                validated_leads.append(lead)
+                continue
+            
             # Extract website field (try multiple common field names)
             source_url = (
                 lead.get("Website") or 
@@ -171,7 +182,9 @@ class Miner(BaseMinerNeuron):
                 f"✅ Source provenance: {len(validated_leads)}/{len(leads)} leads validated"
             )
         else:
-            bt.logging.warning("⚠️ No leads passed source provenance validation")
+            bt.logging.warning(
+                f"⚠️ No leads passed source provenance validation ({len(leads)} lead(s) failed URL/validation)"
+            )
         
         return validated_leads
 
