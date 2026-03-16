@@ -18,7 +18,7 @@ BITTENSOR_BLOCK_TIME_SECONDS = 12
 _current_epoch = None
 _epoch_start_block = None
 _epoch_lock = threading.Lock()
-_epoch_network = "finney"  # Default to mainnet
+_epoch_network = "mainnet"  # Default to mainnet
 
 # Block caching for resilient estimation
 _last_known_block = None
