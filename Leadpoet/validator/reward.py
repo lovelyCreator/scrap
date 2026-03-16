@@ -248,13 +248,13 @@ def _background_epoch_monitor():
         loop.close()
         print("🕐 Background epoch monitor stopped")
 
-def start_epoch_monitor(network: str = "finney"):
+def start_epoch_monitor(network: str = "mainnet"):
     """
     Start the background epoch monitoring thread.
     Should be called when the validator starts up.
     
     Args:
-        network: Bittensor network to connect to ("finney" for mainnet, "test" for testnet)
+        network: Bittensor network to connect to ("mainnet" for mainnet, "test" for testnet)
     """
     global _epoch_monitor_thread, _epoch_monitor_running, _epoch_network
     

@@ -22,7 +22,7 @@ API_URL   = os.getenv("LEAD_API", "https://leadpoet-api-511161415764.us-central1
 
 # Network defaults - can be overridden via environment variables
 SUBNET_ID = int(os.getenv("NETUID", "71"))  # Default to mainnet subnet 71
-NETWORK   = os.getenv("SUBTENSOR_NETWORK", "finney")  # Default to mainnet
+NETWORK   = os.getenv("SUBTENSOR_NETWORK", "mainnet")  # Default to mainnet
 
 # ============================================================
 # PUBLIC SUPABASE CREDENTIALS (Read-only access to transparency_log)
@@ -513,7 +513,7 @@ def push_prospects_to_cloud(
     Args:
         wallet: Miner's Bittensor wallet
         prospects: List of prospect dictionaries to push
-        network: Subtensor network (e.g., "test", "finney"). If None, uses NETWORK env var.
+        network: Subtensor network (e.g., "test", "mainnet"). If None, uses NETWORK env var.
         netuid: Subnet ID. If None, uses NETUID env var.
     """
     if not prospects:
@@ -824,7 +824,7 @@ def fetch_prospects_from_cloud(
     Args:
         wallet: Validator's Bittensor wallet
         limit: Maximum number of prospects to fetch
-        network: Subtensor network (e.g., "test", "finney"). If None, uses NETWORK env var.
+        network: Subtensor network (e.g., "test", "mainnet"). If None, uses NETWORK env var.
         netuid: Subnet ID. If None, uses NETUID env var.
     """
     check_network = network or NETWORK
@@ -896,7 +896,7 @@ def submit_validation_assessment(
         is_valid: Boolean indicating if validator considers lead valid
         rejection_reason: Structured rejection reason dict (required if is_valid=False, None if is_valid=True)
                          Format: {"stage": ..., "check_name": ..., "message": ..., "failed_fields": [...]}
-        network: Subtensor network (e.g., "test", "finney"). If None, uses NETWORK env var.
+        network: Subtensor network (e.g., "test", "mainnet"). If None, uses NETWORK env var.
         netuid: Subnet ID. If None, uses NETUID env var.
     
     Returns:
@@ -1033,7 +1033,7 @@ def get_rejection_feedback(
     Args:
         wallet: Miner's Bittensor wallet (for hotkey identification)
         limit: Maximum number of rejection records to return (default: 50)
-        network: Subtensor network (e.g., "test", "finney"). If None, uses NETWORK env var.
+        network: Subtensor network (e.g., "test", "mainnet"). If None, uses NETWORK env var.
         netuid: Subnet ID. If None, uses NETUID env var.
     
     Returns:

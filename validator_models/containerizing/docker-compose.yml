@@ -19,7 +19,7 @@ services:
       # No HTTP_PROXY - uses EC2's native IP
     command: >
       --netuid 71
-      --subtensor_network finney
+      --subtensor_network mainnet
       --wallet_name validator_72
       --wallet_hotkey default
       --lead-range 0-170
@@ -49,7 +49,7 @@ services:
       - HTTPS_PROXY=${WEBSHARE_PROXY_1}
     command: >
       --netuid 71
-      --subtensor_network finney
+      --subtensor_network mainnet
       --wallet_name validator_72
       --wallet_hotkey default
       --lead-range 170-340
@@ -79,7 +79,7 @@ services:
       - HTTPS_PROXY=${WEBSHARE_PROXY_2}
     command: >
       --netuid 71
-      --subtensor_network finney
+      --subtensor_network mainnet
       --wallet_name validator_72
       --wallet_hotkey default
       --lead-range 340-510

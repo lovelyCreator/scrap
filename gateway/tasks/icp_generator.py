@@ -1137,7 +1137,7 @@ async def generate_and_activate_icp_set(
         return None
     
     # Log to transparency log (ONLY on production, not testnet)
-    BITTENSOR_NETWORK = os.environ.get("BITTENSOR_NETWORK", "finney")
+    BITTENSOR_NETWORK = os.environ.get("BITTENSOR_NETWORK", "mainnet")
     if BITTENSOR_NETWORK == "test":
         logger.info(f"TESTNET: Skipping ICP_SET_ACTIVATED log to protect transparency_log")
     else:

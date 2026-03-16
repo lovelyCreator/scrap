@@ -233,7 +233,7 @@ async def _store_event(
     
     This uses the existing table schema from sourcing events.
     
-    CRITICAL: Only stores events in PRODUCTION (mainnet/finney).
+    CRITICAL: Only stores events in PRODUCTION (mainnet/mainnet).
     On testnet, events are stored in local memory only to avoid
     polluting production transparency logs during testing.
     """
@@ -335,7 +335,7 @@ async def log_evaluation_complete(
     - bottom_10_leads: The 10 lowest-scoring leads returned by the model (PII redacted).
       Used to understand failure patterns and edge cases.
     
-    NOTE: This event is ONLY logged to transparency_log in PRODUCTION (mainnet/finney).
+    NOTE: This event is ONLY logged to transparency_log in PRODUCTION (mainnet/mainnet).
     On testnet, the event is stored in local memory only.
     """
     payload = EvaluationCompletePayload(

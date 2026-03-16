@@ -48,12 +48,12 @@ class EpochMonitor:
     - closed_epochs: Set of epochs we've processed consensus for
     """
     
-    def __init__(self, network: str = "finney"):
+    def __init__(self, network: str = "mainnet"):
         """
         Initialize epoch monitor with empty state.
         
         Args:
-            network: Bittensor network to connect to (default: finney)
+            network: Bittensor network to connect to (default: mainnet)
         """
         self.network = network
         self.subtensor = None  # Will be initialized in start()
