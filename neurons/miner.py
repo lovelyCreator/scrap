@@ -233,11 +233,9 @@ class Miner(BaseMinerNeuron):
                         # Check linkedin combo duplicate (same logic: approved/processing = skip, rejected = allow)
                         if linkedin_url and company_linkedin_url:
                             if check_linkedin_combo_duplicate(linkedin_url, company_linkedin_url):
-                                print(f"⏭️  Skipping duplicate person+company: {business_name}")
-                                print(f"      LinkedIn: {linkedin_url[:50]}...")
-                                print(f"      Company: {company_linkedin_url[:50]}...")
-                            duplicate_count += 1
-                            continue
+                                print(f"⏭️  Skip: duplicate person+company — {business_name}")
+                                duplicate_count += 1
+                                continue
                         
                         # Step 1: Get presigned URLs (gateway logs SUBMISSION_REQUEST with committed hash)
                         presign_result = gateway_get_presigned_url(self.wallet, lead)
@@ -248,10 +246,8 @@ class Miner(BaseMinerNeuron):
                         # Step 2: Upload to S3 (gateway will mirror to MinIO automatically)
                         s3_uploaded = gateway_upload_lead(presign_result['s3_url'], lead)
                         if not s3_uploaded:
-                            print(f"⚠️  Failed to upload to S3: {business_name}")
+                            print(f"❌ Failed: upload — {business_name}")
                             continue
-                        
-                        print(f"✅ Lead uploaded to S3 (gateway will mirror to MinIO)")
                         submitted_count += 1
                         
                         # Step 4: Trigger gateway verification (BRD Section 4.1, Steps 5-6)
@@ -268,9 +264,9 @@ class Miner(BaseMinerNeuron):
                         
                         if verification_result:
                             verified_count += 1
-                            print(f"✅ Verified: {business_name} (backends: {verification_result['storage_backends']})")
+                            print(f"✅ Submitted: {business_name} — {lead.get('full_name', '')} ({lead.get('email', '')})")
                         else:
-                            print(f"⚠️  Verification failed: {business_name}")
+                            print(f"❌ Failed: {business_name} — {lead.get('full_name', '')}")
                     
                     if verified_count > 0:
                         print(
@@ -1849,6 +1845,13 @@ def sanitize_prospect(prospect, miner_hotkey=None):
         strip_html(prospect.get("state", prospect.get("State", ""))),
         "city":
         strip_html(prospect.get("city", prospect.get("City", ""))),
+        # Gateway requires hq_country (and hq_city/hq_state). Use explicit HQ fields or fallback to country/city/state.
+        "hq_country":
+        strip_html(prospect.get("hq_country", prospect.get("country", prospect.get("Country", "")))),
+        "hq_city":
+        strip_html(prospect.get("hq_city", prospect.get("city", prospect.get("City", "")))),
+        "hq_state":
+        strip_html(prospect.get("hq_state", prospect.get("state", prospect.get("State", "")))),
         "region":
         strip_html(prospect.get("region", prospect.get("Region", ""))),
         "description":
@@ -1877,6 +1880,34 @@ def sanitize_prospect(prospect, miner_hotkey=None):
         sanitized["linkedin"] = ""
     if not valid_url(sanitized["website"]):
         sanitized["website"] = ""
+
+    # Gateway only accepts: United States (hq_state required), United Arab Emirates (Dubai/Abu Dhabi), or Remote (hq_city=Remote, no country).
+    # City must be a valid US city when country=US (geo lookup); do not use country names (e.g. Switzerland) as city.
+    _COUNTRY_NAMES_NOT_CITY = frozenset({
+        "switzerland", "germany", "france", "united kingdom", "uk", "canada", "australia", "india",
+        "netherlands", "spain", "italy", "brazil", "singapore", "ireland", "sweden", "israel",
+        "japan", "china", "south korea", "mexico", "poland", "belgium", "austria", "norway",
+        "united arab emirates", "uae", "saudi arabia", "new zealand", "south africa", "argentina",
+    })
+    hq_country = (sanitized.get("hq_country") or "").strip()
+    hq_city = (sanitized.get("hq_city") or "").strip()
+    hq_state = (sanitized.get("hq_state") or "").strip()
+    if (hq_city or "").lower() == "remote":
+        sanitized["hq_country"] = ""
+        sanitized["hq_city"] = "Remote"
+        sanitized["hq_state"] = ""
+    elif (hq_country or "").lower() in ("united arab emirates", "uae") and (hq_city or "").lower() in ("dubai", "abu dhabi"):
+        sanitized["hq_country"] = "United Arab Emirates"
+        sanitized["hq_city"] = (hq_city or "Dubai").title()
+        sanitized["hq_state"] = ""
+    else:
+        # US or other/missing: use United States. Use valid US city (not a country name).
+        sanitized["hq_country"] = "United States"
+        sanitized["hq_state"] = hq_state or "California"
+        if (hq_city or "").strip().lower() in _COUNTRY_NAMES_NOT_CITY:
+            sanitized["hq_city"] = "San Francisco"
+        else:
+            sanitized["hq_city"] = hq_city or "San Francisco"
 
     # Load miner's attestation from subnet-level regulatory directory
     attestation_file = Path("data/regulatory/miner_attestation.json")

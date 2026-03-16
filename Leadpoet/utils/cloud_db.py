@@ -17,7 +17,7 @@ from Leadpoet.utils.utils_lead_extraction import get_email, get_field
 load_dotenv()
 
 # Gateway URL (TEE-based trustless gateway on AWS EC2)
-GATEWAY_URL = os.getenv("GATEWAY_URL", "http://54.226.209.164:8000")
+GATEWAY_URL = os.getenv("GATEWAY_URL", "http://52.91.135.79:8000")
 API_URL   = os.getenv("LEAD_API", "https://leadpoet-api-511161415764.us-central1.run.app")
 
 # Network defaults - can be overridden via environment variables
@@ -2128,15 +2128,9 @@ def gateway_verify_submission(wallet: bt.wallet, lead_id: str) -> Dict:
         response.raise_for_status()
         
         result = response.json()
-        print(f"✅ Gateway verified lead: {result['lead_id'][:8]}...")
-        print(f"   Storage backends: {result['storage_backends']}")
-        print(f"   Submission time: {result['submission_timestamp']}")
-        
-        # Display rate limit stats
-        if "rate_limit_stats" in result:
-            stats = result["rate_limit_stats"]
-            print(f"   📊 Rate limits: {stats['submissions']}/{stats['max_submissions']} submissions, {stats['rejections']}/{stats['max_rejections']} rejections")
-        
+        stats = result.get("rate_limit_stats", {})
+        limits = f" ({stats.get('submissions', '')}/{stats.get('max_submissions', '')} submissions)" if stats else ""
+        print(f"✅ Submitted: {result['lead_id'][:8]}...{limits}")
         return result
         
     except requests.HTTPError as e:
@@ -2168,28 +2162,12 @@ def gateway_verify_submission(wallet: bt.wallet, lead_id: str) -> Dict:
                             print(f"🕐 Resets at: {stats.get('reset_at', 'unknown')}")
                         print(f"{'='*70}\n")
                     else:
-                        print(f"\n{'='*70}")
-                        print(f"❌ GATEWAY REJECTION: {error_msg}")
-                        print(f"{'='*70}")
-                        print(f"Reason: {message}")
-                        
-                        # Show missing fields if present
-                        if "missing_fields" in detail:
-                            print(f"\n⚠️  Missing required fields ({len(detail['missing_fields'])}):")
-                            for field in detail['missing_fields']:
-                                print(f"   • {field}")
-                            
-                            if "required_fields" in detail:
-                                print(f"\n📋 All required fields:")
-                                for field in detail['required_fields']:
-                                    print(f"   • {field}")
-                        
-                        # Show rate limit stats for ALL errors (success or failure)
+                        print(f"❌ Failed — Reason: {message}")
                         if "rate_limit_stats" in detail:
                             stats = detail["rate_limit_stats"]
-                            print(f"\n📊 Rate limits: {stats['submissions']}/{stats['max_submissions']} submissions, {stats['rejections']}/{stats['max_rejections']} rejections")
-                        
-                        print(f"{'='*70}\n")
+                            print(f"   Rate limits: {stats['submissions']}/{stats['max_submissions']} submissions, {stats['rejections']}/{stats['max_rejections']} rejections")
+                        if "missing_fields" in detail:
+                            print(f"   Missing: {', '.join(detail['missing_fields'])}")
                 else:
                     print(f"❌ Gateway error: {error_details}")
             else:

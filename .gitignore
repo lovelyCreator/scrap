@@ -39,6 +39,8 @@ pending_reveals.json  # Validator reveal cache (runtime file)
 # Leadpoet-specific
 wallet.hotkey/
 lead_pool.json
+# Miner: persistent same-lead detection (local cache)
+**/leads_seen.json
 leadpoet_subnet.egg-info/
 
 # Testing and Development
